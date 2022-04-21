@@ -5,8 +5,8 @@ class GetRequest:
         response = requests.get(url)
         response.encoding = 'utf-8'
         if response.status_code != requests.codes.ok:
-            raise RequestException('{}: {}'.format(response.status_code, response.text))
-        
+            raise RequestException(f'{response.status_code}: {response.text}')
+
         self.response = response
 
 class RequestException(Exception):

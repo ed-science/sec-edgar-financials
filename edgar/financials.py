@@ -9,9 +9,7 @@ from datetime import datetime
 class FinancialReportEncoder(JSONEncoder):
         
     def default(self, o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-        return o.__dict__
+        return o.isoformat() if isinstance(o, datetime) else o.__dict__
 
 
 
@@ -126,8 +124,7 @@ def get_financial_report(company, date_filed, financial_html_text):
         or quarterly Edgar filing
     '''
     financial_info = _process_financial_info(financial_html_text)
-    financial_report = FinancialReport(company, date_filed, financial_info)
-    return financial_report
+    return FinancialReport(company, date_filed, financial_info)
 
 
 
@@ -150,7 +147,7 @@ def _process_financial_info(financial_html_text):
         dt = datetime.strptime(date, '%b. %d, %Y')
         financial_info.append(FinancialInfo(dt, period_units[i], {}))
 
-    for row_num, row in enumerate(rows):
+    for row in rows:
         data = row.find_all('td')
 
         xbrl_element = None
@@ -193,7 +190,7 @@ def _process_financial_info(financial_html_text):
             if processed_financial_value is not None:
                 # print(index)
                 if index-1 not in range(len(financial_info)):
-                    print('index-1 {} is too big to capture {}'.format(index-1, processed_financial_value))
+                    print(f'index-1 {index - 1} is too big to capture {processed_financial_value}')
                 financial_info_map = financial_info[index-1].map
 
                 if xbrl_element not in financial_info_map:
@@ -240,7 +237,7 @@ def _get_statement_meta_data(rows):
             info_text = info.get_text().replace('\n', '')
 
             class_list = info.attrs['class']
-            
+
             repeat = 1 if 'colspan' not in info.attrs else int(info.attrs['colspan'])
 
             if row_num == 0:
@@ -270,7 +267,7 @@ def _get_statement_meta_data(rows):
                         # use index 1 because 0 is title
                         repeat += title_repeat
 
-                    for i in range(repeat):
+                    for _ in range(repeat):
                         if is_snapshot:
                             period_units.append(None)
                             dates.append(info_text)
@@ -284,12 +281,12 @@ def _get_statement_meta_data(rows):
                     # repeat just the first one to cover the excess title colspan
                     repeat += title_repeat
 
-                for i in range(repeat):
-                    dates.append(info_text)
-
-
+                dates.extend(info_text for _ in range(repeat))
     if len(dates) != len(period_units):
-        raise MetaDataParsingException('Potential parsing bug: len dates {} != len period_units {}'.format(dates, period_units))
+        raise MetaDataParsingException(
+            f'Potential parsing bug: len dates {dates} != len period_units {period_units}'
+        )
+
 
     return dates, period_units, unit_text
 
@@ -319,12 +316,9 @@ def _process_xbrl_element(info):
     # us-gaap namespace element is in the onclick of the anchor tag
     anchor = info.find('a')
     onclick_attr = anchor.attrs['onclick']
-    # strip javascript
-    xbrl_element = onclick_attr.replace(
+    return onclick_attr.replace(
         'top.Show.showAR( this, \'defref_', ''
-        ).replace('\', window );', '')
-
-    return xbrl_element
+    ).replace('\', window );', '')
 
 
 
@@ -339,7 +333,7 @@ def _process_financial_value(text, xbrl_element, unit_text):
         x is either "shares" or "$"
         y is either "thousands", "millions", or "billions"
     '''
-    is_negative = True if '(' in text else False
+    is_negative = '(' in text
     # strip special characters
     amount_text = re.sub('[^0-9\\.]', '', text)
     value = None
@@ -362,6 +356,9 @@ def _process_financial_value(text, xbrl_element, unit_text):
             value = value * 1000
 
     except ValueError:
-        print('Warning: {} (from {}) is not numeric even after removing special characters () - ignoring'.format(text, xbrl_element, amount_text))
+        print(
+            f'Warning: {text} (from {xbrl_element}) is not numeric even after removing special characters () - ignoring'
+        )
+
 
     return value

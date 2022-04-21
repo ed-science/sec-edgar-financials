@@ -5,7 +5,7 @@ from edgar.financials import FinancialReportEncoder
 
     
 def setup_module(module):
-    print('setup_module      module:%s' % module.__name__)
+    print(f'setup_module      module:{module.__name__}')
 
 
 ###############################################################################

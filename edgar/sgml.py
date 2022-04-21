@@ -59,10 +59,7 @@ class Sgml:
                 if not element.has_end_tag:
                     # extract data until next tag
                     next_tag = self._get_next_tag(data[tag_end:])
-                    next_tag_start = len(data) # using data since this is used in end
-                    if next_tag is not None:
-                        # print('next_tag is '+next_tag)
-                        next_tag_start = data.find(next_tag)
+                    next_tag_start = data.find(next_tag) if next_tag is not None else len(data)
                     value = data[tag_end:next_tag_start].strip()
                     self._add_result(result, tag, value)
                     end = next_tag_start
@@ -84,7 +81,7 @@ class Sgml:
                         else:
                             # the tag isn't in the enclosed_data, so we add empty result
                             child_element = self.dtd.map[child]
-                            
+
                             if child_element.required:
                                 child_no_value = [] if child_element.repeats else ''
                                 self._add_result(result, child, child_no_value)
@@ -94,16 +91,14 @@ class Sgml:
                         # print('recursing over tag '+tag)
                         # print(enclosed_data)
                         value = self._parse_sgml(enclosed_data)
-                        # print('done recursing over tag '+tag)
-                        self._add_result(result, tag, value)
-                        
                     else:
                         # no children, extract the enclosed data
                         value = enclosed_data.strip()
-                        self._add_result(result, tag, value)
+                    # print('done recursing over tag '+tag)
+                    self._add_result(result, tag, value)
 
                     end = end_tag_start + len(end_tag)
-                        
+
                 if end < len(data):
                     # there is additional data outside of what's enclosed, recurse
                     additional_data = data[end:]
@@ -116,8 +111,8 @@ class Sgml:
                     self._add_result(result, None, value)
 
         except KeyError as e:
-            raise SgmlException('Could not parse sgml: {}'.format(e))
-        
+            raise SgmlException(f'Could not parse sgml: {e}')
+
         return result
 
 
@@ -136,27 +131,26 @@ class Sgml:
 
             if key in result and not element.repeats:
                 # for QA...
-                print('overriding '+key+':'+str(result[key]))
-                print('with '+key+':'+str(value))
+                print(f'overriding {key}:{str(result[key])}')
+                print(f'with {key}:{str(value)}')
 
-            if element.repeats:
-                # dealing with a list
-                if key not in result:
-                    if isinstance(value, list):
-                        # value is already a list, add to result
-                        # print('creating result['+key+'] = '+str(value))
-                        result[key] = value
-                    else:
-                        # need to cast value as list
-                        # print('creating result['+key+'] = ['+str(value)+']')
-                        result[key] = [value]
-                else:
-                    # it's already a list and in result, add to it
-                    # print('adding result['+key+'] += '+str(value)+'')
-                    result[key] += value
-            else:
+            if (
+                element.repeats
+                and key not in result
+                and isinstance(value, list)
+                or not element.repeats
+            ):
+                # value is already a list, add to result
                 # print('creating result['+key+'] = '+str(value))
                 result[key] = value
+            elif key not in result:
+                # need to cast value as list
+                # print('creating result['+key+'] = ['+str(value)+']')
+                result[key] = [value]
+            else:
+                # it's already a list and in result, add to it
+                # print('adding result['+key+'] += '+str(value)+'')
+                result[key] += value
 
 
     @staticmethod
@@ -166,7 +160,4 @@ class Sgml:
         '''
         opening_tag_regex = '<[^/].+?>'
         tag_match = re.search(opening_tag_regex, data) # without "?", would get <a>0</a> instead of just <a>
-        # print(data)
-        # print(tag_match)
-        tag = None if tag_match is None else tag_match.group(0)
-        return tag
+        return None if tag_match is None else tag_match[0]

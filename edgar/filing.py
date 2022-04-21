@@ -64,11 +64,11 @@ class Filing:
 
         response = GetRequest(url).response
         text = response.text
-        
+
         self.text = text
 
-        print('Processing SGML at '+url)
-        
+        print(f'Processing SGML at {url}')
+
         dtd = DTD()
         sgml = Sgml(text, dtd)
 
@@ -79,7 +79,7 @@ class Filing:
         for document_raw in sgml.map[dtd.sec_document.tag][dtd.document.tag]:
             document = Document(document_raw)
             self.documents[document.filename] = document
-        
+
         acceptance_datetime_element = sgml.map[dtd.sec_document.tag][dtd.sec_header.tag][dtd.acceptance_datetime.tag]
         acceptance_datetime_text = acceptance_datetime_element[:8] # YYYYMMDDhhmmss, the rest is junk
         # not concerned with time/timezones
@@ -167,8 +167,7 @@ class Filing:
             short_name = short_name.get_text().lower()
             # we want to make sure it matches, up until the end of the text
             if short_name == report_short_name.lower():
-                filename = report.find('htmlfilename').get_text()
-                return filename
+                return report.find('htmlfilename').get_text()
         print(f'could not find anything for ShortName {report_short_name.lower()}')
         return None
 

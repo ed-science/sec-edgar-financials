@@ -25,6 +25,7 @@ https://www.sec.gov/forms):
     4: insider trading (gets us the stock symbol (issuerTradingSymbol))
 These can all have ammendments made, e.g. 10-Q/A
 '''
+
 from edgar.requests_wrapper import GetRequest
 import json
 import re
@@ -44,7 +45,7 @@ SUPPORTED_FORMS = FINANCIAL_FORM_MAP['annual'] + FINANCIAL_FORM_MAP['quarterly']
 EDGAR_MIN_YEAR = 1993
 
 ARCHIVES_URL = 'https://www.sec.gov/Archives/'
-FULL_INDEX_URL = ARCHIVES_URL+'edgar/full-index/'
+FULL_INDEX_URL = f'{ARCHIVES_URL}edgar/full-index/'
 INDEX_JSON = 'index.json'
 # company.idx gives us a list of all companies that filed in the period
 COMPANY_IDX = 'company.idx' # sorted by company name
@@ -103,10 +104,9 @@ def get_index_json(year='', quarter=''):
     response = GetRequest(url).response
     text = response.text
 
-    json_text = json.loads(text)
     #print(text)
     #print(json['directory']['item'][0]['href'])
-    return json_text
+    return json.loads(text)
 
 
 
@@ -116,7 +116,7 @@ def get_latest_quarter_dir(year):
     the latest quarter, returning the number (e.g. 1, 2, 3, 4) and the
     reference in the system (e.g. 'QTR4/')
     '''
-    year_str = str(year)+'/'
+    year_str = f'{str(year)}/'
     index_json = get_index_json(year=year_str)
     items = index_json['directory']['item']
 
@@ -136,7 +136,7 @@ def find_latest_filing_info_going_back_from(period, cik, year, quarter):
     the given year and quarter
     '''
     filing_info_list = []
-    while quarter > 0 and len(filing_info_list) == 0:
+    while quarter > 0 and not filing_info_list:
         filing_info_list = get_financial_filing_info(period=period, cik=cik, year=year, quarter=quarter)
         quarter -= 1
 
@@ -151,12 +151,12 @@ def get_filing_info(cik='', forms=[], year=0, quarter=0):
     current_year = datetime.now().year
 
     if year!=0 and ((len(str(year)) != 4) or year < EDGAR_MIN_YEAR or year > current_year):
-        raise InvalidInputException('{} is not a supported year'.format(year))
+        raise InvalidInputException(f'{year} is not a supported year')
     if quarter not in [0, 1, 2, 3, 4]:
         raise InvalidInputException('Quarter must be 1, 2, 3, or 4. 0 indicates default (latest)')
 
-    year_str = '' if year==0 else str(year)+'/'
-    quarter_str = '' if quarter==0 else 'QTR{}/'.format(quarter)
+    year_str = '' if year==0 else f'{str(year)}/'
+    quarter_str = '' if quarter==0 else f'QTR{quarter}/'
 
     if quarter == 0 and year != 0:
         # we just want the latest available

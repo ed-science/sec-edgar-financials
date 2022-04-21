@@ -39,13 +39,13 @@ def get_all_symbols():
 
     # these have issuerTradingSymbol (https://www.sec.gov/fast-answers/answersform345htm.html)
     forms = ['3', '4', '5'] 
-                    
+
     # starts at full index, reverse to focus on most recent symbol data
     full_directory_item_list = reversed(get_index_json()['directory']['item'])
-    
-    found_starting_year = True if starting_year == '' else False
-    found_starting_quarter = True if starting_quarter == '' else False
-    found_starting_filing_url = True if starting_filing_url == '' else False
+
+    found_starting_year = starting_year == ''
+    found_starting_quarter = starting_quarter == ''
+    found_starting_filing_url = starting_filing_url == ''
 
     try:
         for directory_item in full_directory_item_list:
@@ -66,11 +66,11 @@ def get_all_symbols():
 
                         if not found_starting_quarter and quarter == starting_quarter:
                             found_starting_quarter = True
-                            
+
                         print('year {0} quarter {1}'.format(year, quarter))
-                        
+
                         filings = _get_filing_info(forms=forms, year=year, quarter=quarter)
-                        
+
                         for filing in filings:
                             filing_url = filing.url
 
@@ -95,7 +95,7 @@ def get_all_symbols():
                                 and found_starting_quarter \
                                 and found_starting_filing_url:
                                 cik, symbol = process_symbol_filing(filing_url)
-                                
+
                                 # add to results only if it's not already in there
                                 # or if the symbol has changed (get most recent)
                                 # but this latter condition is handled by reverse

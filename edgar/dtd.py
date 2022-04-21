@@ -21,10 +21,7 @@ class DTD():
             return self.tag.replace('<', '</')
 
         def __repr__(self):
-            parent_tag = 'root'
-            if self.parent:
-                parent_tag = self.parent.tag
-
+            parent_tag = self.parent.tag if self.parent else 'root'
             return '<Element [{0}, {1}, {2}, {3}, {4}]>'.format(
                 self.tag
                 , self.get_end_tag_string() if self.has_end_tag else 'no end tag'
@@ -90,10 +87,7 @@ class DTD():
         def create_dtd(elements):
             '''
             '''
-            dtd = {}
-            for element in elements:
-                dtd[element.tag] = element
-            return dtd
+            return {element.tag: element for element in elements}
 
         # our DTD is stored in a map so that no hard-coding is needed
         # (e.g. can just loop through it)

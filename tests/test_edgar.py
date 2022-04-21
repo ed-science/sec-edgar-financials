@@ -4,7 +4,7 @@ from datetime import datetime
 from edgar.edgar import get_filing_info, SUPPORTED_FORMS, InvalidInputException
     
 def setup_module(module):
-    print('setup_module      module:%s' % module.__name__)
+    print(f'setup_module      module:{module.__name__}')
 
 ############## Positive Testing ##############
 

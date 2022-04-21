@@ -5,7 +5,7 @@ from edgar.financials import FinancialReportEncoder
 
     
 def setup_module(module):
-    print('setup_module      module:%s' % module.__name__)
+    print(f'setup_module      module:{module.__name__}')
 
 
 def test_init():
@@ -18,7 +18,6 @@ def test_get_filing():
 
     stock = Stock(symbol='AAPL')
     filing = stock.get_filing(period='quarterly', year=2016, quarter=1)
-    assert True
 
 
 
